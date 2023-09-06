@@ -1,27 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -32,30 +9,33 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call;
-const plugins = __importStar(require("../plugins"));
-// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call;
-const db = __importStar(require("../database"));
-module.exports = function (user) {
+const plugins = require("../plugins");
+const db = require("../database");
+module.exports = function (User) {
     function toggleFollow(type, uid, theiruid) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (parseInt(uid, 10) <= 0 || parseInt(theiruid, 10) <= 0) {
+            if (parseInt(String(uid), 10) <= 0 || parseInt(String(theiruid), 10) <= 0) {
                 throw new Error('[[error:invalid-uid]]');
             }
-            if (parseInt(uid, 10) === parseInt(theiruid, 10)) {
+            if (parseInt(String(uid), 10) === parseInt(String(theiruid), 10)) {
                 throw new Error('[[error:you-cant-follow-yourself]]');
             }
-            const exists = yield user.exists(theiruid);
+            const exists = yield User.exists(theiruid);
             if (!exists) {
                 throw new Error('[[error:no-user]]');
             }
-            const isFollowing = yield user.isFollowing(uid, theiruid);
+            const isFollowing = yield User.isFollowing(uid, theiruid);
             if (type === 'follow') {
                 if (isFollowing) {
                     throw new Error('[[error:already-following]]');
                 }
                 const now = Date.now();
                 yield Promise.all([
+                    // The next line calls a function in a module that has not been updated to TS yet
+                    /* eslint-disable-next-line
+                    @typescript-eslint/no-unsafe-member-access,
+                    @typescript-eslint/no-unsafe-call,
+                    @typescript-eslint/no-unsafe-assignment */
                     db.sortedSetAddBulk([
                         [`following:${uid}`, now, theiruid],
                         [`followers:${theiruid}`, now, uid],
@@ -67,62 +47,98 @@ module.exports = function (user) {
                     throw new Error('[[error:not-following]]');
                 }
                 yield Promise.all([
+                    // The next line calls a function in a module that has not been updated to TS yet
+                    /* eslint-disable-next-line
+                    @typescript-eslint/no-unsafe-member-access,
+                    @typescript-eslint/no-unsafe-call,
+                    @typescript-eslint/no-unsafe-assignment */
                     db.sortedSetRemoveBulk([
                         [`following:${uid}`, theiruid],
                         [`followers:${theiruid}`, uid],
                     ]),
                 ]);
             }
+            // The next line calls a function in a module that has not been updated to TS yet
+            /* eslint-disable-next-line
+            @typescript-eslint/no-unsafe-member-access,
+            @typescript-eslint/no-unsafe-call,
+            @typescript-eslint/no-unsafe-assignment */
             const [followingCount, followerCount] = yield Promise.all([
+                // The next line calls a function in a module that has not been updated to TS yet
+                /* eslint-disable-next-line
+                @typescript-eslint/no-unsafe-member-access,
+                @typescript-eslint/no-unsafe-call,
+                @typescript-eslint/no-unsafe-assignment */
                 db.sortedSetCard(`following:${uid}`),
+                // The next line calls a function in a module that has not been updated to TS yet
+                /* eslint-disable-next-line
+                @typescript-eslint/no-unsafe-member-access,
+                @typescript-eslint/no-unsafe-call,
+                @typescript-eslint/no-unsafe-assignment */
                 db.sortedSetCard(`followers:${theiruid}`),
             ]);
             yield Promise.all([
-                user.setUserField(uid, 'followingCount', followingCount),
-                user.setUserField(theiruid, 'followerCount', followerCount),
+                User.setUserField(uid, 'followingCount', followingCount),
+                User.setUserField(theiruid, 'followerCount', followerCount),
             ]);
         });
     }
+    User.follow = function (uid, followuid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield toggleFollow('follow', uid, followuid);
+        });
+    };
+    User.unfollow = function (uid, unfollowuid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield toggleFollow('unfollow', uid, unfollowuid);
+        });
+    };
     function getFollow(uid, type, start, stop) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (parseInt(uid, 10) <= 0) {
+            if (parseInt(String(uid), 10) <= 0) {
                 return [];
             }
+            // The next line calls a function in a module that has not been updated to TS yet
+            /* eslint-disable-next-line
+            @typescript-eslint/no-unsafe-member-access,
+            @typescript-eslint/no-unsafe-call,
+            @typescript-eslint/no-unsafe-assignment */
             const uids = yield db.getSortedSetRevRange(`${type}:${uid}`, start, stop);
             const data = yield plugins.hooks.fire(`filter:user.${type}`, {
+                // The next line calls a function in a module that has not been updated to TS yet
+                /* eslint-disable-next-line
+                @typescript-eslint/no-unsafe-member-access,
+                @typescript-eslint/no-unsafe-call,
+                @typescript-eslint/no-unsafe-assignment */
                 uids: uids,
                 uid: uid,
                 start: start,
                 stop: stop,
             });
-            return yield user.getUsers(data.uids, uid);
+            return yield User.getUsers(data.uids, uid);
         });
     }
-    user.follow = function (uid, followuid) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield toggleFollow('follow', uid, followuid);
-        });
-    };
-    user.unfollow = function (uid, unfollowuid) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield toggleFollow('unfollow', uid, unfollowuid);
-        });
-    };
-    user.getFollowing = function (uid, start, stop) {
+    User.getFollowing = function (uid, start, stop) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield getFollow(uid, 'following', start, stop);
         });
     };
-    user.getFollowers = function (uid, start, stop) {
+    User.getFollowers = function (uid, start, stop) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield getFollow(uid, 'followers', start, stop);
         });
     };
-    user.isFollowing = function (uid, theirid) {
+    User.isFollowing = function (uid, theirid) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (parseInt(uid, 10) <= 0 || parseInt(theirid, 10) <= 0) {
+            if (parseInt(String(uid), 10) <= 0 || parseInt(String(theirid), 10) <= 0) {
                 return false;
             }
+            // The next line calls a function in a module that has not been updated to TS yet
+            /* eslint-disable-next-line
+            @typescript-eslint/no-unsafe-member-access,
+            @typescript-eslint/no-unsafe-call,
+            @typescript-eslint/no-unsafe-return,
+            @typescript-eslint/no-unsafe-assignment */
             return yield db.isSortedSetMember(`following:${uid}`, theirid);
         });
     };
